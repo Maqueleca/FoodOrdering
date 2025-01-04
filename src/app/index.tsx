@@ -4,6 +4,8 @@ import Button from '../components/Button';
 import { Link, Redirect } from 'expo-router';
 import { useAuth } from '../providers/AuthProvider';
 import { supabase } from './lib/supabase';
+import 'react-native-url-polyfill/auto'
+
 
 const index = () => {
   const {session, loading} = useAuth();
@@ -28,7 +30,7 @@ const index = () => {
         <Button text="Admin" />
       </Link>
 
-      <Button onPress={()=> supabase.auth.signOut()} text="Sign out" />
+      <Button onPress={()=> supabase.auth.signOut()} text="Terminar Secção" />
     </View>
   );
 };
