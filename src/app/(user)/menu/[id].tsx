@@ -1,59 +1,75 @@
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
-import products from '@/assets/data/products';
+import { View, Text, Image, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { defaultPizzaImage } from '@/src/components/ProductListItem';
 import { useState } from "react";
 import Button from '@/src/components/Button';
 import { useCart } from '@/src/providers/CartProvider';
 import { PizzaSize } from '@/src/types';
 import React from 'react';
+import { useProduct } from '@/src/api/products';
 
 const sizes: PizzaSize[] = ['S', 'M', 'L', 'XL'];
 
 const ProductDetailsScreen = () => {
-    const { id } = useLocalSearchParams();
-    const {addItem } = useCart();
-
+    const { id: idString } = useLocalSearchParams();
+    const id = parseFloat(typeof idString === 'string' ? idString : idString?.[0]);
+    const [selectedSize, setSelectedSize] = useState<PizzaSize>('M');
+    
+    const { data: produto, error, isLoading } = useProduct(id);
+    const { addItem } = useCart();
     const router = useRouter();
 
-    const [selectedSize, setSelectedSize] = useState<PizzaSize>('M');
-
-    const product = products.find((p) => p.id.toString() == id);
-
     const addToCart = () => {
-        if(!product){
+        if (!produto) {
             return;
         }
-        addItem(product, selectedSize);
+        addItem(produto, selectedSize);
         router.push('/cart');
     };
 
-    if (!product) {
-        return <Text>Produto não Encontrado</Text>
+    if (isLoading) {
+        return <ActivityIndicator />;
+    }
+
+    if (error) {
+        return <Text>Produto não Encontrado</Text>;
     }
 
     return (
-        <View>
-            <Stack.Screen options={{ title: product.name }} />
+        <View style={styles.container}>
+            <Stack.Screen options={{ title: produto?.name }} />
 
-            <Image source={{ uri: product.image || defaultPizzaImage }} style={styles.image} />
+            <Image 
+                source={{ uri: produto?.image || defaultPizzaImage }} 
+                style={styles.image} 
+            />
 
-            <Text style= {{marginLeft: 10,}}>Selecione o Tamanho</Text>
+            <Text style={{ marginLeft: 10 }}>Selecione o Tamanho</Text>
+            
             <View style={styles.sizes}>
                 {sizes.map(size => (
                     <Pressable
-                    onPress={ ()=>{
-                        setSelectedSize(size);
-                    }}
-                     style={[styles.size, {backgroundColor: selectedSize == size ? 'gainsboro' : 'white',  }]}  key={size}>
-                        <Text style={[styles.sizeText, {color: selectedSize == size ? 'black' : 'gray',  }]}>{size}</Text>
+                        onPress={() => setSelectedSize(size)}
+                        style={[
+                            styles.size, 
+                            { backgroundColor: selectedSize === size ? 'gainsboro' : 'white' }
+                        ]} 
+                        key={size}
+                    >
+                        <Text 
+                            style={[
+                                styles.sizeText, 
+                                { color: selectedSize === size ? 'black' : 'gray' }
+                            ]}
+                        >
+                            {size}
+                        </Text>
                     </Pressable>
                 ))}
             </View>
 
-
-            <Text style={styles.price}>${product.price}</Text>
-            <Button onPress={addToCart} text='Add ao Cartão'/>
+            <Text style={styles.price}>{produto?.price}, kz</Text>
+            <Button onPress={addToCart} text='Add ao Carrinho' />
         </View>
     );
 };
@@ -80,13 +96,12 @@ const styles = StyleSheet.create({
         marginVertical: 10
     },
     size: {
-        backgroundColor:'gainsboro',
+        backgroundColor: 'gainsboro',
         width: 50,
         aspectRatio: 1,
         borderRadius: 25,
         alignItems: 'center',
         justifyContent: 'center'
-
     },
     sizeText: {
         fontSize: 20,
@@ -95,4 +110,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProductDetailsScreen;
-

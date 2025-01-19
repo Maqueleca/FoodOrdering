@@ -18,7 +18,7 @@ const OrderListItem = ({ order }: OrderListItemProps) => {
     <Link href={`/${segments[0]}/orders/${order.id}`} asChild>
       <Pressable style={styles.container}>
         <View>
-          <Text style={styles.title}>Order #{order.id}</Text>
+          <Text style={styles.title}>Pedido #{order.id}</Text>
           <Text style={styles.time}>{dayjs(order.created_at).fromNow()}</Text>
         </View>
 

@@ -1,12 +1,12 @@
 import { StyleSheet, Image, Pressable } from 'react-native';
 import Colors from '@/src/constants/Colors';
-import { Product } from '../types';
+import {Tables } from '../types';
 import { Link, useSegments } from "expo-router";
 
 export const defaultPizzaImage = 'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/food/peperoni.png';
 
 type ProductListItemProps = {
-  product: Product;
+  product: Tables<'product'>;
 }
 
 import EditScreenInfo from '@/src/components/EditScreenInfo';
@@ -22,7 +22,7 @@ const ProductListItem = ({ product }: ProductListItemProps) => {
           resizeMode='contain'
         />
         <Text style={styles.title}>{product.name}</Text>
-        <Text style={styles.price}>${product.price}</Text>
+        <Text style={styles.price}>{product.price}, kz</Text>
 
       </Pressable>
     </Link>
