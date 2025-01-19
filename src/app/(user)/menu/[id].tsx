@@ -7,6 +7,7 @@ import { useCart } from '@/src/providers/CartProvider';
 import { PizzaSize } from '@/src/types';
 import React from 'react';
 import { useProduct } from '@/src/api/products';
+import RemoteImage from '@/src/components/remoteImage';
 
 const sizes: PizzaSize[] = ['S', 'M', 'L', 'XL'];
 
@@ -14,7 +15,7 @@ const ProductDetailsScreen = () => {
     const { id: idString } = useLocalSearchParams();
     const id = parseFloat(typeof idString === 'string' ? idString : idString?.[0]);
     const [selectedSize, setSelectedSize] = useState<PizzaSize>('M');
-    
+
     const { data: produto, error, isLoading } = useProduct(id);
     const { addItem } = useCart();
     const router = useRouter();
@@ -39,26 +40,27 @@ const ProductDetailsScreen = () => {
         <View style={styles.container}>
             <Stack.Screen options={{ title: produto?.name }} />
 
-            <Image 
-                source={{ uri: produto?.image || defaultPizzaImage }} 
-                style={styles.image} 
+            <RemoteImage
+                path={produto?.image}
+                fallback={defaultPizzaImage} 
+                style={styles.image}
             />
 
             <Text style={{ marginLeft: 10 }}>Selecione o Tamanho</Text>
-            
+
             <View style={styles.sizes}>
                 {sizes.map(size => (
                     <Pressable
                         onPress={() => setSelectedSize(size)}
                         style={[
-                            styles.size, 
+                            styles.size,
                             { backgroundColor: selectedSize === size ? 'gainsboro' : 'white' }
-                        ]} 
+                        ]}
                         key={size}
                     >
-                        <Text 
+                        <Text
                             style={[
-                                styles.sizeText, 
+                                styles.sizeText,
                                 { color: selectedSize === size ? 'black' : 'gray' }
                             ]}
                         >
@@ -67,6 +69,8 @@ const ProductDetailsScreen = () => {
                     </Pressable>
                 ))}
             </View>
+
+    
 
             <Text style={styles.price}>{produto?.price}, kz</Text>
             <Button onPress={addToCart} text='Add ao Carrinho' />

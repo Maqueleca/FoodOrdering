@@ -8,7 +8,10 @@ import React from 'react';
 import { defaultPizzaImage } from '@/src/components/ProductListItem';
 import Button from '@/src/components/Button';
 import Colors from '@/src/constants/Colors';
-
+import * as FileSystem from 'expo-file-system';
+import { supabase } from '../../lib/supabase';
+import {decode} from 'base64-arraybuffer';
+import { randomUUID } from 'expo-crypto';
 
 
 const CreateProductScreen = () => {
@@ -46,15 +49,15 @@ const CreateProductScreen = () => {
   const validateInput = () => {
     setErrors('');
     if (!name) {
-      setErrors('Name is required');
+      setErrors('Preencha o campo Nome');
       return false;
     }
     if (!price) {
-      setErrors('Price is required');
+      setErrors('Preencha o preço');
       return false;
     }
     if (isNaN(parseFloat(price))) {
-      setErrors('Price is not a number');
+      setErrors('Preço é um número');
       return false;
     }
     return true;
@@ -74,8 +77,10 @@ const CreateProductScreen = () => {
       return;
     }
 
+    const imagePath = await uploadImage();
+
     insertProduct(
-      { name, price: parseFloat(price), image },
+      { name, price: parseFloat(price), image: imagePath },
       {
         onSuccess: () => {
           resetFields();
@@ -90,9 +95,10 @@ const CreateProductScreen = () => {
       return;
     }
 
+    const imagePath = await uploadImage();
 
     updateProduct(
-      { id, name, price: parseFloat(price), image },
+      { id, name, price: parseFloat(price), image: imagePath },
       {
         onSuccess: () => {
           resetFields();
@@ -103,7 +109,6 @@ const CreateProductScreen = () => {
   };
 
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -123,6 +128,27 @@ const CreateProductScreen = () => {
         router.replace('/(admin)');
       },
     });
+  };
+
+  const uploadImage = async () => {
+    if (!image?.startsWith('file://')) {
+      return;
+    }
+  
+    const base64 = await FileSystem.readAsStringAsync(image, {
+      encoding: 'base64',
+    });
+    const filePath = `${randomUUID()}.png`;
+
+    const contentType = 'image/png';
+
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, decode(base64), { contentType });
+  
+    if (data) {
+      return data.path;
+    }
   };
 
   const confirmDelete = () => {
