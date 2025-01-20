@@ -5,6 +5,8 @@ import { randomUUID } from "expo-crypto";
 import { useInsertOrder } from "../api/orders";
 import { useRouter } from "expo-router";
 import { useInsertOrderItems } from "../api/order-items";
+import { initialisePaymentSheet, openPaymentSheet } from "../app/lib/stripe";
+import { Alert } from "react-native";
 
 type Product = Tables<'product'>;
 
@@ -66,16 +68,48 @@ const CartProvider = ({ children }: PropsWithChildren) => {
         setItems([]);
     }
 
-    const checkout = () => {
-        insertOrder({ total },
-            {
-                onSuccess: saveOrderItems
+    const checkout = async () => {
+
+        console.log("clicou")
+
+        try {
+            // Inicialize o Payment Sheet
+            const isInitialized = await initialisePaymentSheet(Math.floor(total * 100)); // Converte o total para centavos
+
+            if (!isInitialized) {
+                Alert.alert('Erro', 'Falha ao inicializar o Payment Sheet.');
+                return;
             }
-        )
+
+            // Abra o Payment Sheet
+            const payed = await openPaymentSheet(Math.floor(total * 100));
+
+            if (!payed) {
+                Alert.alert('Pagamento não realizado', 'A transação foi cancelada ou falhou.');
+                return;
+            }
+
+            // Insira o pedido após o pagamento bem-sucedido
+            insertOrder(
+                { total },
+                {
+                    onSuccess: saveOrderItems, // Salva os itens do pedido após o sucesso
+                }
+            );
+
+
+            Alert.alert('Sucesso', 'Pedido realizado com sucesso!');
+        } catch (error) {
+            Alert.alert('Erro', 'Ocorreu um erro durante o processo de checkout.');
+            console.error(error); // Log de erros para debug
+
+        }
+
     };
 
+
     const saveOrderItems = (order: Tables<'orders'>) => {
-        const orderItems = items.map((cartItem)=>({
+        const orderItems = items.map((cartItem) => ({
             order_id: order.id,
             product_id: cartItem.product_id,
             quantity: cartItem.quantity,
